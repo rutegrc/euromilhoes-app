@@ -66,7 +66,7 @@ modo = st.radio(
     index=1
 )
 
-if st.button("Gerar Top 10 Chaves"):
+if st.button("Gerar Top 3 Chaves"):
     historico, fn, fs = carregar_dados()
     resultados = []
 
@@ -78,7 +78,7 @@ if st.button("Gerar Top 10 Chaves"):
             resultados.append((score(c, fn, fs, modo), c))
 
     resultados.sort(reverse=True)
-    top = resultados[:10]
+    top = resultados[:3]
 
     st.success("Chaves geradas com sucesso!")
 
