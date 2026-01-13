@@ -1,28 +1,24 @@
 import streamlit as st
-import csv, random
+import random
+import pandas as pd
 from collections import Counter
 from statistics import mean
 
 st.set_page_config(page_title="Euromilhões Inteligente", layout="centered")
 
-HIST = "historico.csv"
-
-@st.cache_data
-def carregar_dados():
-    import pandas as pd
-
+# -------------------------
+# HISTÓRICO AUTOMÁTICO (online)
+# -------------------------
 @st.cache_data(ttl=86400)  # atualiza 1x por dia
-
 def carregar_dados():
     url = "https://raw.githubusercontent.com/datasets/euromillions/master/data/euromillions.csv"
-
     df = pd.read_csv(url)
 
     chaves, nums, stars = set(), [], []
 
     for _, r in df.iterrows():
-        nums_chave = sorted([r[f"Ball {i}"] for i in range(1,6)])
-        stars_chave = sorted([r["Lucky Star 1"], r["Lucky Star 2"]])
+        nums_chave = sorted([int(r[f"Ball {i}"]) for i in range(1,6)])
+        stars_chave = sorted([int(r["Lucky Star 1"]), int(r["Lucky Star 2"])])
 
         chave = tuple(nums_chave + stars_chave)
         chaves.add(chave)
@@ -31,10 +27,14 @@ def carregar_dados():
 
     return chaves, Counter(nums), Counter(stars)
 
+# -------------------------
 def gerar_chave():
-    return tuple(sorted(random.sample(range(1,51), 5)) +
-                 sorted(random.sample(range(1,13), 2)))
+    return tuple(
+        sorted(random.sample(range(1,51), 5)) +
+        sorted(random.sample(range(1,13), 2))
+    )
 
+# -------------------------
 def score(chave, fn, fs, modo):
     nums, stars = chave[:5], chave[5:]
     s = sum(fn[n] for n in nums) + sum(fs[e] for e in stars) * 2
