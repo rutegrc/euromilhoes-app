@@ -9,15 +9,26 @@ HIST = "historico.csv"
 
 @st.cache_data
 def carregar_dados():
+    import pandas as pd
+
+@st.cache_data(ttl=86400)  # atualiza 1x por dia
+
+def carregar_dados():
+    url = "https://raw.githubusercontent.com/datasets/euromillions/master/data/euromillions.csv"
+
+    df = pd.read_csv(url)
+
     chaves, nums, stars = set(), [], []
-    with open(HIST, newline='') as f:
-        r = csv.DictReader(f)
-        for row in r:
-            chave = tuple(int(row[f"n{i}"]) for i in range(1,6)) + \
-                    (int(row["e1"]), int(row["e2"]))
-            chaves.add(chave)
-            nums.extend(chave[:5])
-            stars.extend(chave[5:])
+
+    for _, r in df.iterrows():
+        nums_chave = sorted([r[f"Ball {i}"] for i in range(1,6)])
+        stars_chave = sorted([r["Lucky Star 1"], r["Lucky Star 2"]])
+
+        chave = tuple(nums_chave + stars_chave)
+        chaves.add(chave)
+        nums.extend(nums_chave)
+        stars.extend(stars_chave)
+
     return chaves, Counter(nums), Counter(stars)
 
 def gerar_chave():
