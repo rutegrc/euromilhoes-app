@@ -9,24 +9,39 @@ st.set_page_config(page_title="Euromilhões Inteligente", layout="centered")
 # -------------------------
 # HISTÓRICO AUTOMÁTICO (online)
 # -------------------------
-@st.cache_data(ttl=86400)  # atualiza 1x por dia
+@st.cache_data(ttl=86400)
 def carregar_dados():
-    url = "https://raw.githubusercontent.com/datasets/euromillions/master/data/euromillions.csv"
-    df = pd.read_csv(url)
-
     chaves, nums, stars = set(), [], []
 
-    for _, r in df.iterrows():
-        nums_chave = sorted([int(r[f"Ball {i}"]) for i in range(1,6)])
-        stars_chave = sorted([int(r["Lucky Star 1"]), int(r["Lucky Star 2"])])
+    try:
+        # tenta online
+        url = "https://www.lottery.co.uk/euromillions/results/download"
+        df = pd.read_csv(url)
 
-        chave = tuple(nums_chave + stars_chave)
-        chaves.add(chave)
-        nums.extend(nums_chave)
-        stars.extend(stars_chave)
+        for _, r in df.iterrows():
+            nums_chave = sorted([int(r["Ball1"]), int(r["Ball2"]), int(r["Ball3"]),
+                                  int(r["Ball4"]), int(r["Ball5"])])
+            stars_chave = sorted([int(r["LuckyStar1"]), int(r["LuckyStar2"])])
+
+            chave = tuple(nums_chave + stars_chave)
+            chaves.add(chave)
+            nums.extend(nums_chave)
+            stars.extend(stars_chave)
+
+    except:
+        # fallback local
+        with open("historico.csv", newline="") as f:
+            r = csv.DictReader(f)
+            for row in r:
+                nums_chave = sorted(int(row[f"n{i}"]) for i in range(1,6))
+                stars_chave = sorted([int(row["e1"]), int(row["e2"])])
+
+                chave = tuple(nums_chave + stars_chave)
+                chaves.add(chave)
+                nums.extend(nums_chave)
+                stars.extend(stars_chave)
 
     return chaves, Counter(nums), Counter(stars)
-
 # -------------------------
 def gerar_chave():
     return tuple(
